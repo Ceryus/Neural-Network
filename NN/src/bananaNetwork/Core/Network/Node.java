@@ -9,8 +9,8 @@ public class Node
 {
 	private Layer parent;
 	private int ID = 0;
-	private double baseOffset = 0f, value,raw;
-	private Path path,Clone;
+	private double bias = 0f, value,raw;
+	private Path path;
 	private ArrayList<Connection> inputConnections = new ArrayList<Connection>();
 	private ArrayList<Connection> outputConnections = new ArrayList<Connection>();
 	//private ArrayList<Double> weights = new ArrayList<Double>();
@@ -27,24 +27,13 @@ public class Node
 		setParent(lay);
 		setPath();
 	}
-	// clones node from file
-	Node(int name, Layer lay, Path from)
-	{
-		this(name,lay);
-		setClone(from);
-	}
+	
 	
 	public double getRaw() {
 		return raw;
 	}
 	public void setRaw(double raw) {
 		this.raw = raw;
-	}
-	public Path getClone() {
-		return Clone;
-	}
-	public void setClone(Path clone) {
-		Clone = clone;
 	}
 	public Layer getParent() {
 		return parent;
@@ -58,11 +47,11 @@ public class Node
 	public void setID(int num) {
 		this.ID = num;
 	}
-	public double getBaseOffset() {
-		return baseOffset;
+	public double getBias() {
+		return bias;
 	}
-	public void setBaseOffset(double baseOffset) {
-		this.baseOffset = baseOffset;
+	public void setBias(double baseOffset) {
+		this.bias = baseOffset;
 	}
 	public Path getPath() {
 		return path;
@@ -97,6 +86,36 @@ public class Node
 	
 	/*----------------------------------------------------*/
 
+	public void freeConnctions()
+	{
+		while(inputConnections.size()>0)
+		{
+			inputConnections.get(0).free();
+		}
+		while(outputConnections.size()>0)
+		{
+			outputConnections.get(0).free();
+		}
+	}
+	public boolean isEmpty()
+	{
+		if(inputConnections==null && outputConnections==null)
+		{
+			return true;
+		}else return false;
+	}
+	public void free()
+	{
+		while(!this.isEmpty())
+		{
+			this.freeConnctions();
+			System.out.println("Im dieing(node)");
+		}
+		parent.removeNode(this);
+		parent.getParent().removeNodeIn(this);
+		parent.getParent().removeNodeOut(this);
+		this.setParent(null);
+	}
 	public void addInputConnection(Node inNode)
 	{
 		Connection temp = new Connection(inNode, this);
@@ -120,6 +139,35 @@ public class Node
 		outNode.hasInputConnection(temp);
 		
 	}
+	public void removeOut(int i)
+	{
+		this.outputConnections.remove(i);
+	}
+	public void removeOut(Connection c)
+	{
+		this.outputConnections.remove(c);
+	}
+	public void removeIn(int i) 
+	{
+		this.inputConnections.remove(i);
+	}
+	public void removeIn(Connection c) 
+	{
+		this.inputConnections.remove(c);
+	}
+
+	//++++++Does not work as intented must return to
+	public Connection getInputConnectionToNode(int n, int l)
+	{
+		for (int i = 0; i < inputConnections.size(); i++) 
+		{
+			if(inputConnections.get(i).getIn().getID() == n && inputConnections.get(i).getIn().parent.getID() == l)
+			{
+				return inputConnections.get(i);
+			}
+		}
+		return null;
+	}
 	public void runNode(Function function)
 	{
 		if(!inputConnections.isEmpty())
@@ -134,13 +182,14 @@ public class Node
 
 	public void calculateRaw()
 	{
-		double temp2 = baseOffset;
+		double temp2 = bias;
 		for(int i = 0; i < inputConnections.size(); i++)
 		{
 			temp2 = (inputConnections.get(i).getIn().getValue() * inputConnections.get(i).getWeight()) + temp2;
 		}
 		raw=temp2;
 	}
-
+	
+	
 }
 

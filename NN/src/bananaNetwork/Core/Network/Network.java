@@ -3,7 +3,6 @@ package bananaNetwork.Core.Network;
 import java.util.ArrayList;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import bananaNetwork.Core.Functions.Function;
 import bananaNetwork.Core.Functions.Sigmoid;;
 
 
@@ -11,31 +10,27 @@ public abstract class Network
 {
 
 	private int ID;
-	private Path path, clone;
+	private Path path;
 	private ArrayList<Layer> layers = new ArrayList<Layer>();
 	private ArrayList<Node> inputNodes = new ArrayList<Node>();
 	private ArrayList<Node> outputNodes = new ArrayList<Node>();
-	Network(int netid, double[] maininput)
+	Network(int netid)
 	{
 		setID(netid);
 		setPath();
-		initNetwork();
 		
 	}
-	Network(ArrayList<Integer[]> con, Path from, int netid, double[] maininput)
+	Network(ArrayList<Integer[]> con, int netid)
 	{
 		setID(netid);
 		setPath();
-		setClone(from);
 		initNetwork(con);
-		
-		
 	}
-	Network(int netid, double[] maininput, String setting)
+	Network(int netid, String setting)
 	{
 		setID(netid);
 		setPath();
-		///initNetwork(setting);
+		initNetwork(setting);
 	}
 	
 	public int getID() {
@@ -60,12 +55,7 @@ public abstract class Network
 	{
 		this.path = Paths.get("src\\main\\network"+ID);
 	}
-	public Path getClone() {
-		return clone;
-	}
-	public void setClone(Path clone) {
-		this.clone = clone;
-	}
+
 	//=====================================================//
 	public void onBoardUpdate(double[] maininput)
 	{
@@ -129,13 +119,60 @@ public abstract class Network
 		}
 		return temp;
 	}
-	
-	public void initNetwork()
+
+	public void createLayer(int layerid, int nl)
 	{
-	
+		this.layers.add(new Layer(layerid, nl, this));
+	}
+	public void removeLayer(int i)
+	{
+		layers.remove(i);
+	}
+	public void removeLayer(Layer l)
+	{
+		layers.remove(l);
+	}
+	public void addlayer(Layer l)
+	{
+		l.getParent().removeLayer(l);
+		l.setParent(this);
+		layers.add(l);
+	}
+	public void freeConnctions()
+	{
+		while(layers.size()>0)
+		{
+			layers.get(0).free();
+		}
 		
 	}
-	
+	public void removeNodeIn(int i)
+	{
+		inputNodes.remove(i);
+	}
+	public void removeNodeIn(Node n)
+	{
+		inputNodes.remove(n);
+	}
+	public void removeNodeOut(int i)
+	{
+		outputNodes.remove(i);
+	}
+	public void removeNodeOut(Node n)
+	{
+		outputNodes.remove(n);
+	}
+	public void connectAllLayer(Layer in, Layer out)
+	{
+		for (int i = 0; i < in.getNodes().size(); i++) 
+		{
+			for (int j = 0; j < out.getNodes().size(); j++) 
+			{
+				createConnection(in.getNodes().get(i),out.getNodes().get(j));
+			}
+		}
+	}
+
 	public void initNetwork(ArrayList<Integer[]> con)
 	{
 		for (int i = 0; i < con.size(); i++) 
@@ -144,15 +181,14 @@ public abstract class Network
 		}
 		
 	}	
-
-	public void createLayer(int layerid, int nl)
+	public void initNetwork(String s)
 	{
-		this.layers.add(new Layer(layerid, nl, this));
+		String[] layersST = s.split("_");
+		for (int i = 0; i < layersST.length; i++) 
+		{
+			createLayer(i, Integer.parseInt(layersST[i]));
+		}
+		
 	}
-	public void createLayer(int layerid, int nl, Path from)
-	{
-		this.layers.add(new Layer(layerid,nl, this, from));
-	}
-
 
 }
